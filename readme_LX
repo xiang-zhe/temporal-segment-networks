@@ -1,0 +1,44 @@
+bug：
+  在docker环境中，需要将tools中的代码全部移除到app文件夹目录下才能调用cv2
+
+introduction：
+  行为识别主要是利用训练集中的类别来预测，从短视频4秒左右抽取25帧作为分析材料，每帧做10次变换，按照类别估计score。
+  
+commend：
+    启动docker-tsn镜像
+  sudo nvidia-docker exec -it angry_noether /bin/bash
+  source ~/.bashrc godocker 
+
+    提取流图：
+  bash scripts/extract_optical_flow.sh /home/LX/hmdb/v2 /home/LX/hmdb/hmdb_flow 1 & 
+
+  对标准数据测试：
+  python eval_net.py ucf101 1 rgb /lx_/dataset/res/ \
+   models/ucf101/tsn_bn_inception_rgb_deploy.prototxt models/ucf101_split_1_tsn_rgb_reference_bn_inception.caffemodel \
+   --num_worker 1 --save_scores /lx_/dataset/SCORE_FILE
+
+  对流图文件夹预测：
+   python eval_net_testLX.py ucf101 1 rgb /lx_/dataset/test/ \
+   models/ucf101/tsn_bn_inception_rgb_deploy.prototxt models/ucf101_split_1_tsn_rgb_reference_bn_inception.caffemodel \
+   --num_worker 1 --save_scores /lx_/dataset/SCORE_FILE_test
+
+  用四種方式調用對流圖預測
+  ucf101:
+      rgb:
+  python eval_net_LX.py rgb /home/LX/pose_video_pic/ \
+   models/ucf101/tsn_bn_inception_rgb_deploy.prototxt models/ucf101_split_1_tsn_rgb_reference_bn_inception.caffemodel \
+   --num_worker 1 --save_scores /home/LX/SCORE_FILE_test
+      flow:
+   python eval_net_testLX.py flow /home/LX/pose_video_pic/ \
+   models/ucf101/tsn_bn_inception_flow_deploy.prototxt models/ucf101_split_1_tsn_flow_reference_bn_inception.caffemodel \
+   --num_worker 1 --save_scores /home/LX/SCORE_FILE_test
+
+   hmdb51:
+      rgb:
+  python eval_net_testLX.py rgb /home/LX/pose_video_pic/ \
+   models/hmdb51/tsn_bn_inception_rgb_deploy.prototxt models/hmdb51_split_1_tsn_rgb_reference_bn_inception.caffemodel \
+   --num_worker 1 --save_scores /home/LX/SCORE_FILE_test
+      flow:
+   python eval_net_testLX.py flow /home/LX/pose_video_pic/ \
+   models/hmdb51/tsn_bn_inception_flow_deploy.prototxt models/hmdb51_split_1_tsn_flow_reference_bn_inception.caffemodel \
+   --num_worker 1 --save_scores /home/LX/SCORE_FILE_test
