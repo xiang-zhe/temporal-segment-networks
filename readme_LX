@@ -42,3 +42,20 @@ commend：
    python eval_net_testLX.py flow /home/LX/pose_video_pic/ \
    models/hmdb51/tsn_bn_inception_flow_deploy.prototxt models/hmdb51_split_1_tsn_flow_reference_bn_inception.caffemodel \
    --num_worker 1 --save_scores /home/LX/SCORE_FILE_test
+
+
+
+ 训练TSN：
+    生成list：
+        bash scripts/build_file_list.sh ucf101 FRAME_PATH
+    初始化模型参数：
+        bash scripts/get_init_models.sh
+    训练：
+        bash scripts/train_tsn.sh ucf101 rgb
+        bash scripts/train_tsn.sh hmdb51 rgb
+        bash train_tsn.sh hmdb51 rgb
+        error: openmpi 错误，地址不对，但是搜索无法定位到，说明docker里面可能没有在安装
+        openmpi安装: 
+
+        去掉mpirun行，程序能运行但是syncedmem.cpp:51] Check failed: error == cudaSuccess (2 vs. 0)  out of memory
+        应该是显卡内存不够，可减少batch—size。
