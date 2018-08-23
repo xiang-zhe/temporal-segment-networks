@@ -14,9 +14,9 @@ from pyActionRecog import parse_split_file
 from pyActionRecog.utils.video_funcs import default_aggregation_func
 
 parser = argparse.ArgumentParser()
-parser.add_argument('dataset', type=str, choices=['ucf101', 'hmdb51'])
-parser.add_argument('split', type=int, choices=[1, 2, 3],
-                    help='on which split to test the network')
+#parser.add_argument('dataset', type=str, choices=['ucf101', 'hmdb51'])
+#parser.add_argument('split', type=int, choices=[1, 2, 3],
+#                    help='on which split to test the network')
 parser.add_argument('modality', type=str, choices=['rgb', 'flow'])
 parser.add_argument('frame_path', type=str, help="root directory holding the frames")
 parser.add_argument('net_proto', type=str)
@@ -38,15 +38,26 @@ sys.path.append(os.path.join(args.caffe_path, 'python'))
 from pyActionRecog.action_caffe import CaffeNet
 
 # build neccessary information
-print args.dataset
-split_tp = parse_split_file(args.dataset)
+#print args.dataset
+#split_tp = parse_split_file(args.dataset) #指向视屏名称txt列表 [([trainlist1], [testlist1]),([trainlist2], [testlist2]),([trainlist3], [testlist3])]
 f_info = parse_directory(args.frame_path,
-                         args.rgb_prefix, args.flow_x_prefix, args.flow_y_prefix)
+                         args.rgb_prefix, args.flow_x_prefix, args.flow_y_prefix) #return dir_dict, rgb_counts, flow_counts
 
 gpu_list = args.gpus
 
 
-eval_video_list = split_tp[args.split - 1][1]
+#eval_video_list = split_tp[args.split - 1][1] #用于验证的视频名称
+#eval_video_list = [("video", 0),] #指定测试video
+
+path = args.frame_path
+eval_video_list = []
+for root, dirs, files in os.walk(path):
+    for name in dirs:
+        #print(os.path.join(root, name))
+        eval_video_list.append((name,0))
+print 'eval_video_list:'  
+print eval_video_list  #[('v_ApplyEyeMakeup_g01_c01', 0), ('v_ApplyEyeMakeup_g01_c02', 0), ...名称和标签
+
 
 score_name = 'fc-action'
 
@@ -64,16 +75,17 @@ def build_net():
 def eval_video(video):
     global net
     label = video[1]
-    vid = video[0]
+    vid = video[0] #视频名称
 
-    video_frame_path = f_info[0][vid]
+    video_frame_path = f_info[0][vid] #info[0]拿到目录字典，[vid]拿到frame的路径
+
     if args.modality == 'rgb':
         cnt_indexer = 1
     elif args.modality == 'flow':
         cnt_indexer = 2
     else:
         raise ValueError(args.modality)
-    frame_cnt = f_info[cnt_indexer][vid]
+    frame_cnt = f_info[cnt_indexer][vid] #拿到flow的路径
 
     stack_depth = 0
     if args.modality == 'rgb':
@@ -81,7 +93,7 @@ def eval_video(video):
     elif args.modality == 'flow':
         stack_depth = 5
 
-    step = (frame_cnt - stack_depth) / (args.num_frame_per_video-1)
+    step = (frame_cnt - stack_depth) / (args.num_frame_per_video-1) 
     if step > 0:
         frame_ticks = range(1, min((2 + step * (args.num_frame_per_video-1)), frame_cnt+1), step)
     else:
@@ -90,7 +102,7 @@ def eval_video(video):
     assert(len(frame_ticks) == args.num_frame_per_video)
 
     frame_scores = []
-    for tick in frame_ticks:
+    for tick in frame_ticks: #frame_ticks每个视频取25帧
         if args.modality == 'rgb':
             name = '{}{:05d}.jpg'.format(args.rgb_prefix, tick)
             frame = cv2.imread(os.path.join(video_frame_path, name), cv2.IMREAD_COLOR)
@@ -109,7 +121,7 @@ def eval_video(video):
 
     print 'video {} done'.format(vid)
     sys.stdin.flush()
-    return np.array(frame_scores), label
+    return np.array(frame_scores), label #返回每一帧的评分的数组和真实标签
 
 if args.num_worker > 1:
     pool = multiprocessing.Pool(args.num_worker, initializer=build_net)
@@ -117,10 +129,19 @@ if args.num_worker > 1:
 else:
     build_net()
     video_scores = map(eval_video, eval_video_list)
+'''
+print 'video_scores'
+print video_scores
+print video_scores[0][0][0]
+print np.array(video_scores).shape
+print np.array(video_scores).shape()
+'''
+video_pred = [np.argmax(default_aggregation_func(x[0])) for x in video_scores] #预测结果
 
-video_pred = [np.argmax(default_aggregation_func(x[0])) for x in video_scores]
-video_labels = [x[1] for x in video_scores]
-
+print 'video_pred:'
+print video_pred
+video_labels = [x[1] for x in video_scores] #真实标签
+'''
 cf = confusion_matrix(video_labels, video_pred).astype(float)
 
 cls_cnt = cf.sum(axis=1)
@@ -131,6 +152,7 @@ cls_acc = cls_hit/cls_cnt
 print cls_acc
 
 print 'Accuracy {:.02f}%'.format(np.mean(cls_acc)*100)
+'''
 
 if args.save_scores is not None:
     np.savez(args.save_scores, scores=video_scores, labels=video_labels)

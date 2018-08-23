@@ -1,7 +1,7 @@
 __author__ = 'yjxiong'
 
 import os
-import glob
+import glob # return  a list of paths matching a pathname pattern.
 import sys
 from pipes import quote
 from multiprocessing import Pool, current_process
@@ -14,7 +14,7 @@ def dump_frames(vid_path):
     import cv2
     video = cv2.VideoCapture(vid_path)
     vid_name = vid_path.split('/')[-1].split('.')[0]
-    out_full_path = os.path.join(out_path, vid_name)
+    out_full_path = os.path.join(out_path, vid_name) #out_path in args
 
     fcount = int(video.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT))
     try:
@@ -27,9 +27,9 @@ def dump_frames(vid_path):
         assert ret
         cv2.imwrite('{}/{:06d}.jpg'.format(out_full_path, i), frame)
         access_path = '{}/{:06d}.jpg'.format(vid_name, i)
-        file_list.append(access_path)
+        file_list.append(access_path) #filename
     print '{} done'.format(vid_name)
-    sys.stdout.flush()
+    sys.stdout.flush() # refresh output
     return file_list
 
 
@@ -112,9 +112,9 @@ if __name__ == '__main__':
         print "creating folder: "+out_path
         os.makedirs(out_path)
 
-    vid_list = glob.glob(src_path+'/*/*.'+ext)
-    print len(vid_list)
-    pool = Pool(num_worker)
+    vid_list = glob.glob(src_path+'/*/*.'+ext) # 
+    print len(vid_list) #
+    pool = Pool(num_worker) #multiprocess
     if flow_type == 'tvl1':
         pool.map(run_optical_flow, zip(vid_list, xrange(len(vid_list))))
     elif flow_type == 'warp_tvl1':

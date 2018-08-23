@@ -40,16 +40,18 @@ def parse_directory(path, rgb_prefix='img_', flow_x_prefix='flow_x_', flow_y_pre
 
 
 def build_split_list(split_tuple, frame_info, split_idx, shuffle=False):
-    split = split_tuple[split_idx]
+    split = split_tuple[split_idx] #split_idx = 3 split_tuple= [(names,labels),(names,labels),(names,labels)]
 
     def build_set_list(set_list):
         rgb_list, flow_list = list(), list()
         for item in set_list:
-            frame_dir = frame_info[0][item[0]]
-            rgb_cnt = frame_info[1][item[0]]
-            flow_cnt = frame_info[2][item[0]]
+            frame_dir = frame_info[0][item[0]] #frame_info[0] = dir_dict: {'Return_of_the_King_11_smoke_h_nm_np1_fr_med_2': '/home/LX/hmdb_handup/Return_of_the_King_11_smoke_h_nm_np1_fr_med_2'}
+            rgb_cnt = frame_info[1][item[0]] #frame_info[1] = rgb_counts: {'Bubble_Blowing_Bubble_Gum_chew_h_nm_np1_fr_bad_2': 113}
+            flow_cnt = frame_info[2][item[0]] #frame_info[2] = flow_counts: {'Return_of_the_King_11_smoke_h_nm_np1_fr_med_2': 114}
             rgb_list.append('{} {} {}\n'.format(frame_dir, rgb_cnt, item[1]))
             flow_list.append('{} {} {}\n'.format(frame_dir, flow_cnt, item[1]))
+            if item[0] == '10-r_0':
+                print('+++++++++++++++++++++++++++++++++++++++,', item, frame_dir, rgb_cnt, flow_cnt)
         if shuffle:
             random.shuffle(rgb_list)
             random.shuffle(flow_list)
@@ -82,10 +84,12 @@ def parse_ucf_splits():
 def parse_hmdb51_splits():
     # load split file
     class_files = glob.glob('data/hmdb51_splits/*split*.txt')
+    open('/home/LX/class_file.txt', 'w').writelines(str(class_file))
 
     # load class list
     class_list = [x.strip() for x in open('data/hmdb51_splits/class_list.txt')]
     class_dict = {x: i for i, x in enumerate(class_list)}
+    print(class_dict)
 
     def parse_class_file(filename):
         # parse filename parts

@@ -12,7 +12,7 @@ parser.add_argument('frame_path', type=str, help="root directory holding the fra
 parser.add_argument('--rgb_prefix', type=str, help="prefix of RGB frames", default='img_')
 parser.add_argument('--flow_x_prefix', type=str, help="prefix of x direction flow images", default='flow_x')
 parser.add_argument('--flow_y_prefix', type=str, help="prefix of y direction flow images", default='flow_y')
-parser.add_argument('--num_split', type=int, default=3)
+parser.add_argument('--num_split', type=int, default=1)
 parser.add_argument('--out_list_path', type=str, default='data/')
 parser.add_argument('--shuffle', action='store_true', default=False)
 
@@ -30,12 +30,14 @@ shuffle = args.shuffle
 
 # operation
 print 'processing dataset {}'.format(dataset)
-split_tp = parse_split_file(dataset)
-f_info = parse_directory(frame_path, rgb_p, flow_x_p, flow_y_p)
-
+split_tp = parse_split_file(dataset) #split_tp = [([('10-l_1', 17),...],[],[])]
+f_info = parse_directory(frame_path, rgb_p, flow_x_p, flow_y_p) # f_info  = 3 dicts
+#print type(split_tp),len(split_tp),split_tp
 print 'writing list files for training/testing'
 for i in xrange(max(num_split, len(split_tp))):
+    print('i--------', i)
     lists = build_split_list(split_tp, f_info, i, shuffle)
+    print(lists) #return ((['/home/LX/hmdb_handup/Ger_teturnen_Pr_fung_-_G_S_somersault_f_cm_np1_le_med_2 77 42\n',...],[]), ([],[])) 
     open(os.path.join(out_path, '{}_rgb_train_split_{}.txt'.format(dataset, i+1)), 'w').writelines(lists[0][0])
     open(os.path.join(out_path, '{}_rgb_val_split_{}.txt'.format(dataset, i+1)), 'w').writelines(lists[0][1])
     open(os.path.join(out_path, '{}_flow_train_split_{}.txt'.format(dataset, i+1)), 'w').writelines(lists[1][0])
